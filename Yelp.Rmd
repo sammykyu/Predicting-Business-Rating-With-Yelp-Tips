@@ -1,0 +1,26 @@
+---
+title: "Yelp"
+author: "Sammy"
+date: "October 6, 2015"
+output: html_document
+---
+
+
+```{r}
+require(RJSONIO)
+readJSONFile <- function(fileName) {
+  mydata <- fromJSON(fileName)
+#   mydata <- lapply(mydata, function(x) {
+#     x[sapply(x, is.null)] <- NA
+#     unlist(x)
+#   })
+} 
+
+```
+
+```{r}
+users <- readJSONFile("yelp_academic_dataset_user.json")
+
+```
+
+
