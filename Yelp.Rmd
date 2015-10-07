@@ -18,8 +18,38 @@ readJSONFile <- function(fileName) {
 
 ```
 
+Business:
+```{r}
+business <- readJSONFile("yelp_academic_dataset_business.json")
+str(business)
+
+```
+
+Checkin:
+```{r}
+checkins <- readJSONFile("yelp_academic_dataset_checkin.json")
+str(checkins)
+
+```
+
+Review:
+```{r}
+reviews <- readJSONFile("yelp_academic_dataset_review.json")
+str(reviews)
+
+```
+
+Tip:
+```{r}
+tips <- readJSONFile("yelp_academic_dataset_tip.json")
+str(tips)
+
+```
+
+User:
 ```{r}
 users <- readJSONFile("yelp_academic_dataset_user.json")
+str(usres)
 
 ```
 
