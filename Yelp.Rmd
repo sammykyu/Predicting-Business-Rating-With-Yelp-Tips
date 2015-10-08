@@ -5,25 +5,30 @@ date: "October 6, 2015"
 output: html_document
 ---
 
-
 ```{r}
 require(RJSONIO)
-readJSONFile <- function(fileName) {
-  mydata <- fromJSON(fileName)
-#   mydata <- lapply(mydata, function(x) {
-#     x[sapply(x, is.null)] <- NA
-#     unlist(x)
-#   })
+
+```
+
+
+```{r}
+
+processJsonData <- function(jsonData) {
+  jsonData <- lapply(jsonData, function(x) {
+    #x[sapply(x, is.null)] <- NA
+    unlist(x)
+  })
+  do.call("rbind", jsonData)
 } 
 
 ```
 
 BUSINESS:
 ```{r}
-business <- readJSONFile("yelp_academic_dataset_business.json")
-str(business)
-df_business <- data.frame(matrix(unlist(business), byrow=T))
-str(df_business)
+bus_ls <- fromJSON("yelp_academic_dataset_business.json")
+str(bus_ls)
+bus_df <- processJsonData(bus_ls)
+str(bus_df)
 ```
 
 Checkin:
