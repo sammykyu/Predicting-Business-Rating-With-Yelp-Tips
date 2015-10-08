@@ -18,11 +18,12 @@ readJSONFile <- function(fileName) {
 
 ```
 
-Business:
+BUSINESS:
 ```{r}
 business <- readJSONFile("yelp_academic_dataset_business.json")
 str(business)
-
+df_business <- data.frame(matrix(unlist(business), byrow=T))
+str(df_business)
 ```
 
 Checkin:
