@@ -33,28 +33,31 @@ str(bus_df)
 
 Checkin:
 ```{r}
-checkins <- readJSONFile("yelp_academic_dataset_checkin.json")
-str(checkins)
-
+chk_ls <- fromJSON("yelp_academic_dataset_checkin.json")
+str(chk_ls)
+chk_df <- processJsonData(chk_ls)
+str(chk_df)
 ```
 
 Review:
 ```{r}
-reviews <- readJSONFile("yelp_academic_dataset_review.json")
-str(reviews)
+rv_ls <- fromJSON("yelp_academic_dataset_review.json")
+str(rv_ls)
+rv_df <- processJsonData(rv_ls)
+str(rv_df)
 
 ```
 
 Tip:
 ```{r}
-tips <- readJSONFile("yelp_academic_dataset_tip.json")
+tips <- fromJSON("yelp_academic_dataset_tip.json")
 str(tips)
 
 ```
 
 User:
 ```{r}
-users <- readJSONFile("yelp_academic_dataset_user.json")
+users <- fromJSON("yelp_academic_dataset_user.json")
 str(usres)
 
 ```
