@@ -31,27 +31,46 @@ str(bus)
 
 Checkin:
 ```{r}
+<<<<<<< HEAD
 checkins <- stream_in(file("yelp_academic_dataset_checkin.json"))
 str(checkins)
 
+=======
+chk_ls <- fromJSON("yelp_academic_dataset_checkin.json")
+str(chk_ls)
+chk_df <- processJsonData(chk_ls)
+str(chk_df)
+>>>>>>> d4b50bdb29787e5b0c92d9c471cee6f55e48aa14
 ```
 
 Review:
 ```{r}
+<<<<<<< HEAD
 reviews <- stream_in(file("yelp_academic_dataset_review.json"))
 str(reviews)
+=======
+rv_ls <- fromJSON("yelp_academic_dataset_review.json")
+str(rv_ls)
+rv_df <- processJsonData(rv_ls)
+str(rv_df)
+>>>>>>> d4b50bdb29787e5b0c92d9c471cee6f55e48aa14
 
 ```
 
 Tip:
 ```{r}
+<<<<<<< HEAD
 tips <- stream_in(file("yelp_academic_dataset_tip.json"))
+=======
+tips <- fromJSON("yelp_academic_dataset_tip.json")
+>>>>>>> d4b50bdb29787e5b0c92d9c471cee6f55e48aa14
 str(tips)
 
 ```
 
 User:
 ```{r}
+<<<<<<< HEAD
 userfile <- file("yelp_academic_dataset_user.json")
 users <- stream_in(userfile)
 close(userFile)
@@ -65,6 +84,10 @@ r2c2 <- nrow(users[(users$compliments$funny<=1 | is.na(users$compliments$funny))
 
 mdat <- matrix(c(r1c1,r1c2, r2c1,r2c2),nrow=2,ncol=2, byrow = TRUE, dimnames = list(c("funny>1","funny<=1"),c("fans>1","fans<=1")))
 fisher.test(mdat)
+=======
+users <- fromJSON("yelp_academic_dataset_user.json")
+str(usres)
+>>>>>>> d4b50bdb29787e5b0c92d9c471cee6f55e48aa14
 
 ```
 
