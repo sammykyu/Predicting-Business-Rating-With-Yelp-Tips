@@ -7,52 +7,50 @@ output: html_document
 
 ```{r}
 library(jsonlite)
-
-```
-
-
-```{r}
-
-processJsonData <- function(jsonData) {
-  jsonData <- lapply(jsonData, function(x) {
-    #x[sapply(x, is.null)] <- NA
-    unlist(x)
-  })
-  do.call("rbind", jsonData)
-} 
+bus <- stream_in(file("yelp_academic_dataset_business.json"))
+checkins <- stream_in(file("yelp_academic_dataset_checkin.json"))
+reviews <- stream_in(file("yelp_academic_dataset_review.json"))
+tips <- stream_in(file("yelp_academic_dataset_tip.json"))
+users <- stream_in(file("yelp_academic_dataset_user.json"))
 
 ```
 
 BUSINESS:
 ```{r}
-bus <- stream_in(file("yelp_academic_dataset_business.json"))
 str(bus)
+
+compareNA <- function(v1,v2) {
+    same <- (v1 == v2) | (is.na(v1) & is.na(v2))
+    same[is.na(same)] <- FALSE
+    return(same)
+}
+
+bus$attributes$`Wi-Fi` <- as.factor(bus$attributes$`Wi-Fi`)
+levels(bus$attributes$`Wi-Fi`)
+bus[is.na(bus$attributes$`Wi-Fi`),]$attributes$`Wi-Fi` <- 'myna'
+nrow(bus[(bus$attributes$`Wi-Fi`=="paid"),])
 
 ```
 
 Checkin:
 ```{r}
-checkins <- stream_in(file("yelp_academic_dataset_checkin.json"))
 str(checkins)
 
 ```
 
 Review:
 ```{r}
-reviews <- stream_in(file("yelp_academic_dataset_review.json"))
 str(reviews)
 
 ```
 
 Tip:
 ```{r}
-tips <- stream_in(file("yelp_academic_dataset_tip.json"))
 str(tips)
 ```
 
 User:
 ```{r}
-users <- stream_in(file("yelp_academic_dataset_user.json"))
 users[is.na(users$fans),]$fans <- 0
 users[is.na(users$compliments$funny),]$compliments$funny <- 0
 str(users)
