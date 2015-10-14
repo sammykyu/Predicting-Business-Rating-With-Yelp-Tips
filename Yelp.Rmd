@@ -8,52 +8,47 @@ output: html_document
 ```{r}
 library(jsonlite)
 bus <- stream_in(file("yelp_academic_dataset_business.json"))
-checkins <- stream_in(file("yelp_academic_dataset_checkin.json"))
+chkins <- stream_in(file("yelp_academic_dataset_checkin.json"))
 reviews <- stream_in(file("yelp_academic_dataset_review.json"))
 tips <- stream_in(file("yelp_academic_dataset_tip.json"))
 users <- stream_in(file("yelp_academic_dataset_user.json"))
 
-```
-
-BUSINESS:
-```{r}
 str(bus)
-
-compareNA <- function(v1,v2) {
-    same <- (v1 == v2) | (is.na(v1) & is.na(v2))
-    same[is.na(same)] <- FALSE
-    return(same)
-}
-
-bus$attributes$`Wi-Fi` <- as.factor(bus$attributes$`Wi-Fi`)
-levels(bus$attributes$`Wi-Fi`)
-bus[is.na(bus$attributes$`Wi-Fi`),]$attributes$`Wi-Fi` <- 'myna'
-nrow(bus[(bus$attributes$`Wi-Fi`=="paid"),])
-
-```
-
-Checkin:
-```{r}
-str(checkins)
-
-```
-
-Review:
-```{r}
+str(chkins)
 str(reviews)
+str(tips)
+str(users)
+
 
 ```
 
-Tip:
+
 ```{r}
-str(tips)
+# randomly take 100 samples from the business dataset
+bus_smp <- bus[sample(nrow(bus), 100), ]
+
+```
+
+
+```{r}
+chkins_smp <- chkins[sample(nrow(chkins), 100), ]
+
+```
+
+```{r}
+reviews_smp <- reviews[sample(nrow(reviews), 100), ]
+```
+
+```{r}
+tips_smp <- tips[sample(nrow(tips), 100), ]
 ```
 
 User:
 ```{r}
+users_smp <- users[sample(nrow(users), 100), ]
+
 users[is.na(users$fans),]$fans <- 0
 users[is.na(users$compliments$funny),]$compliments$funny <- 0
-str(users)
 
 r1c1 <- nrow(users[(users$compliments$funny<=1) & (users$fans<=1),])
 r1c2 <- nrow(users[(users$compliments$funny<=1) & (users$fans>1),])
