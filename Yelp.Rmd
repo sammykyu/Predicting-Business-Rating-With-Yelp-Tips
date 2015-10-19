@@ -41,6 +41,33 @@ reviews_smp <- reviews[sample(nrow(reviews), 100), ]
 
 ```{r}
 tips_smp <- tips[sample(nrow(tips), 100), ]
+
+library(NLP)
+library(tm)
+tips_text <- paste(tips$text, collapse=" ")
+tips_source <- VectorSource(tips_text)
+corpus <- Corpus(tips_source)
+
+#cleaning
+corpus <- tm_map(corpus, content_transformer(tolower))
+corpus <- tm_map(corpus, removePunctuation)
+corpus <- tm_map(corpus, stripWhitespace)
+corpus <- tm_map(corpus, removeWords, stopwords("english"))
+
+#make a document-term matrix
+dtm <- DocumentTermMatrix(corpus)
+dtm2 <- as.matrix(dtm)
+
+#Find frequent terms
+frequency <- colSums(dtm2)
+frequency <- sort(frequency, decreasing=TRUE)
+
+install.packages('wordcloud')
+require(wordcloud)
+
+words <- names(frequency)
+wordcloud(words[1:100], frequency[1:100])
+
 ```
 
 User:
@@ -60,5 +87,6 @@ mdat <- matrix(c(r1c1,r1c2, r2c1,r2c2),nrow=2,ncol=2, byrow = TRUE, dimnames = l
 fisher.test(mdat)
 
 ```
+
 
 
