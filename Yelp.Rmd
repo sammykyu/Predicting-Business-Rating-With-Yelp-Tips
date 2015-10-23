@@ -8,6 +8,7 @@ output: html_document
 ```{r}
 library(jsonlite)
 bus <- stream_in(file("yelp_academic_dataset_business.json"))
+bus$categories <- as.factor(bus$categories)
 chkins <- stream_in(file("yelp_academic_dataset_checkin.json"))
 reviews <- stream_in(file("yelp_academic_dataset_review.json"))
 tips <- stream_in(file("yelp_academic_dataset_tip.json"))
@@ -66,7 +67,10 @@ install.packages('wordcloud')
 require(wordcloud)
 
 words <- names(frequency)
-wordcloud(words[1:100], frequency[1:100])
+wordcloud(words[1:500], frequency[1:500], ordered.colors = TRUE)
+
+require(ggplot2)
+ggplot(data=tips, aes(x=business_id, y=likes)) + geom_bar(stat = "identity")
 
 ```
 
