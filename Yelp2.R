@@ -1,12 +1,11 @@
+### This model uses the sampled data from the original datasets and keep all the terms ###
+
 library(jsonlite)
 library(NLP)
 library(tm)
 library(dplyr)
 library(SnowballC)
 library(wordcloud)
-#library(lattice)
-#library(ggplot2)
-#library(caret)
 library(pls)
 library(FactoMineR)
 library(stats)
@@ -14,9 +13,12 @@ library(glmnet)
 
 bus <- stream_in(file("yelp_academic_dataset_business.json"))
 tips <- stream_in(file("yelp_academic_dataset_tip.json"))
+allbustips <- merge(bus[,c("business_id","stars")], tips[,c("business_id","likes","text")], by="business_id")
+set.seed(1960)
+bustips_smp <- allbustips[sample(nrow(tips), 10000),]
 
 ## preprocessing
-vsource <- VectorSource(tips$text)
+vsource <- VectorSource(bustips_smp$text)
 corpus <- Corpus(vsource)
 
 ## cleaning
@@ -30,8 +32,8 @@ corpus <- tm_map(corpus, stemDocument)
 ## make a document-term matrix
 dtm <- DocumentTermMatrix(corpus)
 ## TODO: think about using sparse matrix instead of removing sparse terms
-dtmSparse <- removeSparseTerms(dtm, 0.996)
-dtm2 <- as.matrix(dtmSparse)
+#dtmSparse <- removeSparseTerms(dtm, 0.996)
+dtm2 <- as.matrix(dtm)
 
 # ## Find frequent terms
 # frequency <- colSums(dtm2)
@@ -40,13 +42,13 @@ dtm2 <- as.matrix(dtmSparse)
 # words <- names(frequency)
 # wordcloud(words, frequency)
 
-dtm_tips <- cbind(business_id=tips$business_id, as.data.frame(dtm2))
-dtm_tips <- cbind(tips[,c("business_id", "likes")], as.data.frame(dtm2))
+#dtm_tips <- cbind(business_id=tips$business_id, as.data.frame(dtm2))
+bustips <- cbind(bustips_smp[,c("stars", "likes")], as.data.frame(dtm2))
 #dtm_tips$business_id <- as.character(dtm_tips$business_id)
 
 ## merge tips with bus
-bustips <- merge(bus[,c("business_id","stars")], dtm_tips, by="business_id")
-bustips$business_id <- NULL
+#bustips <- merge(bus[,c("business_id","stars")], dtm_tips, by="business_id")
+#bustips$business_id <- NULL
 #bustips$likes <- as.numeric(bustips$likes)
 
 ## linear regression
