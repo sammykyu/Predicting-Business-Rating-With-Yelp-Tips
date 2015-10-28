@@ -7,7 +7,7 @@ library(wordcloud)
 library(lattice)
 library(ggplot2)
 library(caret)
-# library(pls)
+library(pls)
 library(FactoMineR)
 library(stats)
 library(glmnet)
@@ -86,3 +86,8 @@ mean((lasso.pred -y.test)^2)
 out=glmnet (x,y,alpha=1, lambda=grid)
 lasso.coef=predict (out ,type="coefficients",s= bestlam) [1:20,]
 lasso.coef
+
+## pcr
+set.seed(2)
+pcr.fit <- pcr(stars ~., data= bustips, scale=TRUE, validation="CV")
+summary(pcr.fit)
