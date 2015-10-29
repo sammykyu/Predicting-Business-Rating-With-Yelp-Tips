@@ -96,3 +96,19 @@ summary(pcr.fit)
 validationplot(pcr.fit, val.type="MSEP")
 pcr.pred <- predict(pcr.fit, newx=x[test,],ncomp=35)
 mean((pcr.pred[,1,1]-y.test)^2)
+
+## Prcomp
+pca.fit <- prcomp(x[train ,], center = TRUE, scale=TRUE)
+pca.fit
+plot(pca.fit, type="l")
+summary(pca.fit)
+predict(pca.fit, test)
+
+## PCA
+pca2 = PCA(x[train ,], graph = FALSE)
+# matrix with eigenvalues
+pca2$eig
+# correlations between variables and PCs
+pca2$var$coord
+# PCs (aka scores)
+head(pca2$ind$coord)
