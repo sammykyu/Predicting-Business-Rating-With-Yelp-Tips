@@ -49,6 +49,10 @@ bustips <- merge(bus[,c("business_id","stars")], dtm_tips, by="business_id")
 bustips$business_id <- NULL
 #bustips$likes <- as.numeric(bustips$likes)
 
+## Naive model
+naive.pred <- mean(y[train])
+mean((naive.pred -y.test)^2)
+
 ## linear regression
 set.seed(2046)
 ## partition the original training data into a training set (70%) and a validation set (30%)
