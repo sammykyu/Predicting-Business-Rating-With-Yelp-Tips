@@ -57,7 +57,7 @@ training <- bustips[inTrain,]
 validation <- bustips[-inTrain,]
 lm.fit <- lm(stars ~., data=validation)
 
-## ridge regression
+## prepare data for RR and Lasso
 x=model.matrix(stars~., bustips)[,-1]
 y=bustips$stars
 grid=10^seq(10,-2, length=100)
@@ -66,6 +66,7 @@ train=sample (1: nrow(x), nrow(x) * 0.7)
 test=(-train)
 y.test=y[test]
 
+## ridge regression
 ridge.mod=glmnet(x[train ,],y[train],alpha=0, lambda =grid, thresh =1e-12)
 cv.out=cv.glmnet(x[train ,],y[train],alpha=0)
 plot(cv.out)
@@ -81,13 +82,17 @@ set.seed(1)
 cv.out=cv.glmnet(x[train ,],y[ train],alpha=1)
 plot(cv.out)
 bestlam =cv.out$lambda.min
-lasso.pred=predict (lasso.mod ,s=bestlam ,newx=x[test ,])
+lasso.pred=predict (lasso.mod ,s=bestlam ,newx=x[test,])
 mean((lasso.pred -y.test)^2)
 out=glmnet (x,y,alpha=1, lambda=grid)
-lasso.coef=predict (out ,type="coefficients",s= bestlam) [1:20,]
+lasso.coef=predict (out ,type="coefficients",s= bestlam)[1:296,]
 lasso.coef
+lasso.coef[lasso.coef>0]
 
 ## pcr
 set.seed(2)
-pcr.fit <- pcr(stars ~., data= bustips, scale=TRUE, validation="CV")
+pcr.fit <- pcr(stars ~., data= bustips, subset=train, scale=TRUE, validation="CV")
 summary(pcr.fit)
+validationplot(pcr.fit, val.type="MSEP")
+pcr.pred <- predict(pcr.fit, newx=x[test,],ncomp=35)
+mean((pcr.pred[,1,1]-y.test)^2)
