@@ -4,9 +4,9 @@ library(tm)
 library(dplyr)
 library(SnowballC)
 library(wordcloud)
-#library(lattice)
-#library(ggplot2)
-#library(caret)
+library(lattice)
+library(ggplot2)
+library(caret)
 library(pls)
 library(FactoMineR)
 library(stats)
@@ -41,7 +41,7 @@ dtm2 <- as.matrix(dtmSparse)
 # wordcloud(words, frequency)
 
 dtm_tips <- cbind(business_id=tips$business_id, as.data.frame(dtm2))
-dtm_tips <- cbind(tips[,c("business_id", "likes")], as.data.frame(dtm2))
+#dtm_tips <- cbind(tips[,c("business_id", "likes")], as.data.frame(dtm2))
 #dtm_tips$business_id <- as.character(dtm_tips$business_id)
 
 ## merge tips with bus
@@ -89,9 +89,10 @@ bestlam =cv.out$lambda.min
 lasso.pred=predict (lasso.mod ,s=bestlam ,newx=x[test,])
 mean((lasso.pred -y.test)^2)
 out=glmnet (x,y,alpha=1, lambda=grid)
-lasso.coef=predict (out ,type="coefficients",s= bestlam)[1:296,]
+lasso.coef=predict (out ,type="coefficients",s= bestlam)[1:295,]
 lasso.coef
 lasso.coef[lasso.coef>0]
+length(lasso.coef[lasso.coef>0])
 
 ## pcr
 set.seed(2)
@@ -102,11 +103,11 @@ pcr.pred <- predict(pcr.fit, newx=x[test,],ncomp=35)
 mean((pcr.pred[,1,1]-y.test)^2)
 
 ## Prcomp
-pca.fit <- prcomp(x[train ,], center = TRUE, scale=TRUE)
+pca.fit <- prcomp(x = x[train,], retx=TRUE, center = TRUE, scale=TRUE)
 pca.fit
 plot(pca.fit, type="l")
 summary(pca.fit)
-predict(pca.fit, test)
+predict(pca.fit, x[test,])
 
 ## PCA
 pca2 = PCA(x[train ,], graph = FALSE)
@@ -116,3 +117,4 @@ pca2$eig
 pca2$var$coord
 # PCs (aka scores)
 head(pca2$ind$coord)
+summary(pca2)
