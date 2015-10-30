@@ -33,12 +33,12 @@ dtm <- DocumentTermMatrix(corpus)
 dtmSparse <- removeSparseTerms(dtm, 0.996)
 dtm2 <- as.matrix(dtmSparse)
 
-# ## Find frequent terms
-# frequency <- colSums(dtm2)
-# frequency <- sort(frequency, decreasing=TRUE)
-# ## make word cloud
-# words <- names(frequency)
-# wordcloud(words, frequency)
+## Find frequent terms
+frequency <- colSums(dtm2)
+frequency <- sort(frequency, decreasing=TRUE)
+## make word cloud
+words <- names(frequency)
+wordcloud(words, frequency)
 
 dtm_tips <- cbind(business_id=tips$business_id, as.data.frame(dtm2))
 #dtm_tips <- cbind(tips[,c("business_id", "likes")], as.data.frame(dtm2))
