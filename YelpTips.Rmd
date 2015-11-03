@@ -7,7 +7,7 @@ output: html_document
 
 ### Introduction
 
-
+The tips on the Yelp web site is the insider information provided by the Yelp's users or reviewers. The text of the tips contain the sentiments of the users of how they would recomend for the other users when they use the service or buy a product from a particular business. They can positive or negative and should be consistent with review posted by the same user. In this study, I will try to predict a business overall rating based on only the text of tips to see how the tips can affect the rating or image of the business.
 
 ### Methods and Data
 

@@ -1,4 +1,4 @@
-memory.size(40000)
+memory.size(30000)
 
 library(jsonlite)
 library(NLP)
