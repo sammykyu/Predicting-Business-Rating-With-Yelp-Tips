@@ -1,0 +1,21 @@
+---
+title: "Business Rating Prediction Based on Yelp Tips"
+author: "Sammy Yu"
+date: "November 2, 2015"
+output: html_document
+---
+
+### Introduction
+
+
+
+### Methods and Data
+
+
+
+### Results
+
+
+
+### Discussion
+

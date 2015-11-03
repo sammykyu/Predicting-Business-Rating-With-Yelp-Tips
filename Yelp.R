@@ -1,3 +1,5 @@
+memory.size(40000)
+
 library(jsonlite)
 library(NLP)
 library(tm)
