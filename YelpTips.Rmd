@@ -24,6 +24,32 @@ tips <- stream_in(file("yelp_academic_dataset_tip.json"))
 ```
 
 
+#### Text mining on the tip texts
+```{r, cache=TRUE, eval=FALSE}
+library(NLP)
+library(tm)
+
+## set the tip texts as the source
+vsource <- VectorSource(tips$text)
+tiptexts <- Corpus(vsource)
+
+## cleaning
+tiptexts <- tm_map(tiptexts, content_transformer(tolower))
+tiptexts <- tm_map(tiptexts, removeNumbers)
+tiptexts <- tm_map(tiptexts, removePunctuation)
+tiptexts <- tm_map(tiptexts, stripWhitespace)
+tiptexts <- tm_map(tiptexts, removeWords, stopwords("english"))
+tiptexts <- tm_map(tiptexts, stemDocument)
+
+## create a document-term matrix from the tip texts
+dtm <- DocumentTermMatrix(tiptexts)
+## remove the terms with more than 99.6% sparcity from the dtm
+dtm2 <- removeSparseTerms(dtm, 0.996)
+## save the dtm as a regular matrix for later processing
+rdtm <- as.matrix(dtm2)
+
+```
+
 
 ### Results
 
