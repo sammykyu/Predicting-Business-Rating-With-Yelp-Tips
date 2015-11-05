@@ -11,6 +11,18 @@ The tips on the Yelp web site is the insider information provided by the Yelp's 
 
 ### Methods and Data
 
+To create and train a prediction model for business ratings, I use two datasets, "yelp_academic_dataset_business.json" and "yelp_academic_dataset_tips.json" from [Yelp Dataset Challenge](http://www.yelp.com/dataset_challenge) (Rounds 5 and 6).
+
+Both files are in JSON format. The files will be read, merged and cleaned up before they are used for developing the prediction model.  
+
+#### Reading data
+```{r, cache=TRUE, eval=FALSE}
+library(jsonlite)
+bus <- stream_in(file("yelp_academic_dataset_business.json"))
+tips <- stream_in(file("yelp_academic_dataset_tip.json"))
+
+```
+
 
 
 ### Results
