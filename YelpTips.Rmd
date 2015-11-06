@@ -44,9 +44,28 @@ tiptexts <- tm_map(tiptexts, stemDocument)
 ## create a document-term matrix from the tip texts
 dtm <- DocumentTermMatrix(tiptexts)
 ## remove the terms with more than 99.6% sparcity from the dtm
-dtm2 <- removeSparseTerms(dtm, 0.996)
+dtm <- removeSparseTerms(dtm, 0.996)
 ## save the dtm as a regular matrix for later processing
-rdtm <- as.matrix(dtm2)
+dtm2 <- as.matrix(dtm)
+## add the business ID column to the term matrix
+dtm_tips <- cbind(business_id=tips$business_id, as.data.frame(dtm2))
+
+## merge the business ratings with tip terms dataframe
+bustips <- merge(bus[,c("business_id","stars")], dtm_tips, by="business_id")
+## business ID column is no longer needed
+bustips$business_id <- NULL
+
+```
+
+#### Most frequent used terms in tips 
+```{r, cache=TRUE, eval=FALSE}
+## Find frequent terms
+frequency <- colSums(dtm2)
+frequency <- sort(frequency, decreasing=TRUE)
+## make word cloud
+words <- names(frequency)
+## show the first 100 most frequent used terms in a word cloud
+wordcloud(words[1:100], frequency[1:100])
 
 ```
 
