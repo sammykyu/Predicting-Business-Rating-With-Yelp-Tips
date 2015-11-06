@@ -26,13 +26,17 @@ corpus <- tm_map(corpus, content_transformer(tolower))
 corpus <- tm_map(corpus, removeNumbers)
 corpus <- tm_map(corpus, removePunctuation)
 corpus <- tm_map(corpus, stripWhitespace)
-corpus <- tm_map(corpus, removeWords, stopwords("english"))
+#corpus <- tm_map(corpus, removeWords, stopwords("english"))
 corpus <- tm_map(corpus, stemDocument)
 
+BigramTokenizer <- function(x)
+    unlist(lapply(ngrams(words(x), 2), paste, collapse = " "), use.names = FALSE)
+
+dtm <- DocumentTermMatrix(corpus, control = list(tokenize = BigramTokenizer))
+
 ## make a document-term matrix
-dtm <- DocumentTermMatrix(corpus)
-## TODO: think about using sparse matrix instead of removing sparse terms
-dtmSparse <- removeSparseTerms(dtm, 0.996)
+# dtm <- DocumentTermMatrix(corpus)
+dtmSparse <- removeSparseTerms(dtm, 0.998)
 dtm2 <- as.matrix(dtmSparse)
 
 ## Find frequent terms
@@ -43,8 +47,6 @@ words <- names(frequency)
 wordcloud(words, frequency)
 
 dtm_tips <- cbind(business_id=tips$business_id, as.data.frame(dtm2))
-#dtm_tips <- cbind(tips[,c("business_id", "likes")], as.data.frame(dtm2))
-#dtm_tips$business_id <- as.character(dtm_tips$business_id)
 
 ## merge tips with bus
 bustips <- merge(bus[,c("business_id","stars")], dtm_tips, by="business_id")
@@ -91,7 +93,8 @@ bestlam =cv.out$lambda.min
 lasso.pred=predict (lasso.mod ,s=bestlam ,newx=x[test,])
 mean((lasso.pred -y.test)^2)
 out=glmnet (x,y,alpha=1, lambda=grid)
-lasso.coef=predict (out ,type="coefficients",s= bestlam)[1:295,]
+#lasso.coef=predict (out ,type="coefficients",s= bestlam)[1:295,]
+lasso.coef=predict (out ,type="coefficients",s= bestlam)[1:292,]
 lasso.coef
 lasso.coef[lasso.coef>0]
 length(lasso.coef[lasso.coef>0])
