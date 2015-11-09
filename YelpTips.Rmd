@@ -15,19 +15,93 @@ To create and train a prediction model for business ratings, I use two datasets,
 
 Both files are in JSON format. The files will be read, merged and cleaned up before they are used for developing the prediction model.  
 
-#### Reading data
-```{r, cache=TRUE, eval=FALSE}
+```{r, echo=TRUE}
 library(jsonlite)
+library(NLP)
+library(tm)
+library(SnowballC)
+library(wordcloud)
+library(glmnet)
+
+```
+
+#### Reading data
+```{r, cache=FALSE, eval=TRUE}
 bus <- stream_in(file("yelp_academic_dataset_business.json"))
 tips <- stream_in(file("yelp_academic_dataset_tip.json"))
 
 ```
 
+#### User defined functions
+```{r, cache=FALSE}
+
+PlotWordCloud <- function (docTermMatrix) {
+  ## Find frequent terms
+  frequency <- colSums(docTermMatrix)
+  frequency <- sort(frequency, decreasing=TRUE)
+  ## make word cloud
+  words <- names(frequency)
+  wordcloud(words, frequency, max.words=75)
+}
+
+GetModelingData <- function (docTermMatrix) {
+  ## add the business ID column to the term matrix
+  dtm_tips <- cbind(business_id=tips$business_id, as.data.frame(docTermMatrix))
+  
+  ## merge the business ratings with tip terms dataframe
+  bustips <- merge(bus[,c("business_id","stars")], dtm_tips, by="business_id")
+  ## business ID column is no longer needed
+  bustips$business_id <- NULL
+
+  ## prepare the training and test data
+  x <- model.matrix(stars~., bustips)[,-1]
+  y <- bustips$stars
+  ## create a list of lambdas for regularization
+#   lambdas <- 10^seq(10,-2, length=100)
+  set.seed(1)
+  ## randomly get 70% of the data for training, 30% for validation
+  train<-sample (1: nrow(x), nrow(x) * 0.7)
+#   test<-(-train)
+#   x.train <- x[train,]
+#   x.test <- x[test,]
+#   y.test=y[test]
+  
+#  return(list(x.train=x[train,], x.test=x[test,], y.test=y[test], y.train=y[train], lambdas=10^seq(10,-2, length=100)))
+  return(list(x=x, y=y, train=train, lambdas=10^seq(10,-2, length=100)))
+}
+
+RidgeRegression <- function (trainingParams) {
+  ridge.mod <- glmnet(trainingParams$x.train, trainingParams$y.train, alpha=0, lambda=trainingParams$lambdas, thresh=1e-12)
+  set.seed(1)
+  cv.out <- cv.glmnet(trainingParams$x.train, trainingParams$y.train, alpha=0)
+  bestlamda <- cv.out$lambda.min
+  ridge.pred <- predict(ridge.mod, s=bestlamda, newx=trainingParams$x.test)
+  mse <- mean((ridge.pred - trainingParams$y.test)^2)
+  
+  return(list(mod=ridge.mod, bestlamda=bestlamda, mse=mse))
+}
+
+LassoRegression <- function (params) {
+  train <- params$train
+  test <- (-train)
+  lasso.mod <- glmnet(params$x[train,], params$y[train], alpha=1, lambda=params$lambdas)
+  set.seed(2)
+  cv.out <- cv.glmnet(params$x[train,], params$y[train], alpha=1)
+  bestlamda <- cv.out$lambda.min
+  lasso.pred  <- predict(lasso.mod, s=bestlamda, newx=params$x[test,])
+  mse <- mean((lasso.pred - params$y[test])^2)
+  out <- glmnet (params$x, params$y, alpha=1, lambda=params$lambdas)
+  lasso.pred.coef <- predict(out, type="coefficients", s=bestlamda)
+  ## get the coefficients vector
+  lasso.coef <- lasso.pred.coef[1:dim(lasso.pred.coef)[1],]
+  
+  return(list(mod=lasso.mod, bestlamda=bestlamda, mse=mse, coef=lasso.coef))
+}
+
+```
 
 #### Text mining on the tip texts
-```{r, cache=TRUE, eval=FALSE}
-library(NLP)
-library(tm)
+```{r, cache=FALSE, eval=TRUE}
 
 ## set the tip texts as the source
 vsource <- VectorSource(tips$text)
@@ -38,39 +112,63 @@ tiptexts <- tm_map(tiptexts, content_transformer(tolower))
 tiptexts <- tm_map(tiptexts, removeNumbers)
 tiptexts <- tm_map(tiptexts, removePunctuation)
 tiptexts <- tm_map(tiptexts, stripWhitespace)
-tiptexts <- tm_map(tiptexts, removeWords, stopwords("english"))
-tiptexts <- tm_map(tiptexts, stemDocument)
 
+## unigram data
+tiptexts_ugm <- tm_map(tiptexts, removeWords, stopwords("english"))
+tiptexts_ugm <- tm_map(tiptexts_ugm, stemDocument)
 ## create a document-term matrix from the tip texts
-dtm <- DocumentTermMatrix(tiptexts)
+dtm_ugm <- DocumentTermMatrix(tiptexts_ugm)
 ## remove the terms with more than 99.6% sparcity from the dtm
-dtm <- removeSparseTerms(dtm, 0.996)
+dtm_ugm <- removeSparseTerms(dtm_ugm, 0.996)
 ## save the dtm as a regular matrix for later processing
-dtm2 <- as.matrix(dtm)
-## add the business ID column to the term matrix
-dtm_tips <- cbind(business_id=tips$business_id, as.data.frame(dtm2))
+dtm2_ugm <- as.matrix(dtm_ugm)
 
-## merge the business ratings with tip terms dataframe
-bustips <- merge(bus[,c("business_id","stars")], dtm_tips, by="business_id")
-## business ID column is no longer needed
-bustips$business_id <- NULL
+## bigrams data (we keep the stop words)
+tiptexts_bgm <- tm_map(tiptexts, stemDocument)
+## create a document-term matrix from the tip texts
+dtm_bgm <- DocumentTermMatrix(tiptexts_bgm)
+## remove the terms with more than 99.8% sparcity from the dtm
+dtm_bgm <- removeSparseTerms(dtm_bgm, 0.998)
+## save the dtm as a regular matrix for later processing
+dtm2_bgm <- as.matrix(dtm_bgm)
+
 
 ```
 
 #### Most frequent used terms in tips 
-```{r, cache=TRUE, eval=FALSE}
-## Find frequent terms
-frequency <- colSums(dtm2)
-frequency <- sort(frequency, decreasing=TRUE)
-## make word cloud
-words <- names(frequency)
-## show the first 100 most frequent used terms in a word cloud
-wordcloud(words[1:100], frequency[1:100])
+```{r, eval=TRUE}
+PlotWordCloud(dtm2_ugm)
+
+```
+
+#### Naive model
+```{r, cache=FALSE}
+## The predicted rating is simply the average of the ratings in the training data
+naive.pred <- mean(bus$stars)
+## Mean square errors (MSE) of the naive model
+naive.mse <- mean((naive.pred - bus$stars)^2)
+
+```
+
+#### Lasso regression using Unigrams
+```{r, cache=FALSE}
+data_ugm <- GetModelingData(dtm2_ugm)
+result_ugm <- LassoRegression(data_ugm)
 
 ```
 
 
+
 ### Results
+```{r}
+result_ugm$mod
+result_ugm$bestlamda
+result_ugm$mse
+result_ugm$coef
+result_ugm$coef[result_ugm$coef>0]
+length(result_ugm$coef[result_ugm$coef>0])
+
+```
 
 
 

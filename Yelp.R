@@ -44,7 +44,9 @@ frequency <- colSums(dtm2)
 frequency <- sort(frequency, decreasing=TRUE)
 ## make word cloud
 words <- names(frequency)
-wordcloud(words, frequency)
+maxlen <- ifelse(length(words) > 50, 50, length(words))
+## show at most 100 most frequent used terms in a word cloud
+wordcloud(words[1:maxlen], frequency[1:maxlen])
 
 dtm_tips <- cbind(business_id=tips$business_id, as.data.frame(dtm2))
 
@@ -71,7 +73,7 @@ test=(-train)
 y.test=y[test]
 
 ## Naive model
-naive.pred <- mean(y[train])
+naive.pred <- mean(bus$stars)
 mean((naive.pred -y.test)^2)
 
 ## ridge regression
@@ -93,8 +95,8 @@ bestlam =cv.out$lambda.min
 lasso.pred=predict (lasso.mod ,s=bestlam ,newx=x[test,])
 mean((lasso.pred -y.test)^2)
 out=glmnet (x,y,alpha=1, lambda=grid)
-#lasso.coef=predict (out ,type="coefficients",s= bestlam)[1:295,]
-lasso.coef=predict (out ,type="coefficients",s= bestlam)[1:292,]
+lasso.coef2=predict (out ,type="coefficients",s= bestlam)
+lasso.coef=lasso.coef2[1:dim(lasso.coef2)[1],]
 lasso.coef
 lasso.coef[lasso.coef>0]
 length(lasso.coef[lasso.coef>0])
