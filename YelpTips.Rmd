@@ -15,7 +15,7 @@ To create and train a prediction model for business ratings, I use two datasets,
 
 Both files are in JSON format. The files will be read, merged and cleaned up before they are used for developing the prediction model.  
 
-```{r, echo=TRUE}
+```{r, echo=FALSE}
 library(jsonlite)
 library(NLP)
 library(tm)
@@ -26,7 +26,7 @@ library(glmnet)
 ```
 
 #### Reading data
-```{r, cache=FALSE, eval=TRUE}
+```{r, cache=FALSE, eval=TRUE, echo=FALSE}
 bus <- stream_in(file("yelp_academic_dataset_business.json"))
 tips <- stream_in(file("yelp_academic_dataset_tip.json"))
 
@@ -57,17 +57,12 @@ GetModelingData <- function (docTermMatrix) {
   x <- model.matrix(stars~., bustips)[,-1]
   y <- bustips$stars
   ## create a list of lambdas for regularization
-#   lambdas <- 10^seq(10,-2, length=100)
+  lambdas <- 10^seq(10,-2, length=100)
   set.seed(1)
   ## randomly get 70% of the data for training, 30% for validation
   train<-sample (1: nrow(x), nrow(x) * 0.7)
-#   test<-(-train)
-#   x.train <- x[train,]
-#   x.test <- x[test,]
-#   y.test=y[test]
-  
-#  return(list(x.train=x[train,], x.test=x[test,], y.test=y[test], y.train=y[train], lambdas=10^seq(10,-2, length=100)))
-  return(list(x=x, y=y, train=train, lambdas=10^seq(10,-2, length=100)))
+
+  return(list(x=x, y=y, train=train, lambdas=lambdas))
 }
 
 RidgeRegression <- function (trainingParams) {
@@ -161,10 +156,7 @@ result_ugm <- LassoRegression(data_ugm)
 
 ### Results
 ```{r}
-result_ugm$mod
-result_ugm$bestlamda
 result_ugm$mse
-result_ugm$coef
 result_ugm$coef[result_ugm$coef>0]
 length(result_ugm$coef[result_ugm$coef>0])
 
