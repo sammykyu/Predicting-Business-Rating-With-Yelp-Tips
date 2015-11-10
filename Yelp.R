@@ -76,7 +76,20 @@ y.test=y[test]
 naive.pred <- mean(bus$stars)
 mean((naive.pred -y.test)^2)
 
+
 ## ridge regression
+RidgeRegression <- function (trainingParams) {
+  ridge.mod <- glmnet(trainingParams$x.train, trainingParams$y.train, alpha=0, lambda=trainingParams$lambdas, thresh=1e-12)
+  set.seed(1)
+  cv.out <- cv.glmnet(trainingParams$x.train, trainingParams$y.train, alpha=0)
+  bestlamda <- cv.out$lambda.min
+  ridge.pred <- predict(ridge.mod, s=bestlamda, newx=trainingParams$x.test)
+  mse <- mean((ridge.pred - trainingParams$y.test)^2)
+  
+  return(list(mod=ridge.mod, bestlamda=bestlamda, mse=mse))
+}
+
+
 ridge.mod=glmnet(x[train ,],y[train],alpha=0, lambda =grid, thresh =1e-12)
 cv.out=cv.glmnet(x[train ,],y[train],alpha=0)
 plot(cv.out)

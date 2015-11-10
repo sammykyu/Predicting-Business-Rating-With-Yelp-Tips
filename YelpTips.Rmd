@@ -15,7 +15,22 @@ To create and train a prediction model for business ratings, I use two datasets,
 
 Both files are in JSON format. The files will be read, merged and cleaned up before they are used for developing the prediction model.  
 
-```{r, echo=FALSE}
+
+The algorithm I use to develop the prediction model is called the LASSO (Least Absolute Shrinkage and Selection Operator) which was developed by Robert Tibshirani in 1996. The LASSO is derived from multiple linear regression and is similar to Ridge Regression which penalize the coefficients to minimize overfitting. The LASSO has an advantage over Ridge Regression though is that it not only shrinks the coefficients but also force some of the coefficients to be exactly zero when the tuning parameter \lambda is selected large enough.  
+
+$rating = \beta_{0} + \beta_{1}T_{1} + \beta_{1}T_{2} + ... + \beta_{p}T_{p} + \varepsilon$  
+
+Where the $T_{p}$ is a popular word or term appears in the tips text, such as "great".  
+The goal of the LASSO is to find the coefficients those can minimize the quantity below:  
+
+$RSS + \lambda\sum_{j=1}^{p}{|}\beta_{j}{|}$  
+
+Where $RSS(Root Square Errors) = \sum_{i=1}^{n}({rating}_{i} - \beta_{0} - \sum_{j=1}^{p}\beta_{j}{T}_{ij})^2$    
+
+
+
+```{r, echo=FALSE, eval=FALSE}
+memory.size(max=30000)
 library(jsonlite)
 library(NLP)
 library(tm)
@@ -26,14 +41,14 @@ library(glmnet)
 ```
 
 #### Reading data
-```{r, cache=FALSE, eval=TRUE, echo=FALSE}
+```{r, cache=TRUE, eval=FALSE, echo=FALSE}
 bus <- stream_in(file("yelp_academic_dataset_business.json"))
 tips <- stream_in(file("yelp_academic_dataset_tip.json"))
 
 ```
 
 #### User defined functions
-```{r, cache=FALSE}
+```{r, eval=FALSE}
 
 PlotWordCloud <- function (docTermMatrix) {
   ## Find frequent terms
@@ -41,7 +56,7 @@ PlotWordCloud <- function (docTermMatrix) {
   frequency <- sort(frequency, decreasing=TRUE)
   ## make word cloud
   words <- names(frequency)
-  wordcloud(words, frequency, max.words=75)
+  wordcloud(words, frequency, max.words=100)
 }
 
 GetModelingData <- function (docTermMatrix) {
@@ -65,17 +80,6 @@ GetModelingData <- function (docTermMatrix) {
   return(list(x=x, y=y, train=train, lambdas=lambdas))
 }
 
-RidgeRegression <- function (trainingParams) {
-  ridge.mod <- glmnet(trainingParams$x.train, trainingParams$y.train, alpha=0, lambda=trainingParams$lambdas, thresh=1e-12)
-  set.seed(1)
-  cv.out <- cv.glmnet(trainingParams$x.train, trainingParams$y.train, alpha=0)
-  bestlamda <- cv.out$lambda.min
-  ridge.pred <- predict(ridge.mod, s=bestlamda, newx=trainingParams$x.test)
-  mse <- mean((ridge.pred - trainingParams$y.test)^2)
-  
-  return(list(mod=ridge.mod, bestlamda=bestlamda, mse=mse))
-}
-
 LassoRegression <- function (params) {
   train <- params$train
   test <- (-train)
@@ -96,7 +100,7 @@ LassoRegression <- function (params) {
 ```
 
 #### Text mining on the tip texts
-```{r, cache=FALSE, eval=TRUE}
+```{r, cache=TRUE, eval=FALSE}
 
 ## set the tip texts as the source
 vsource <- VectorSource(tips$text)
@@ -127,17 +131,17 @@ dtm_bgm <- removeSparseTerms(dtm_bgm, 0.998)
 ## save the dtm as a regular matrix for later processing
 dtm2_bgm <- as.matrix(dtm_bgm)
 
-
 ```
 
+
 #### Most frequent used terms in tips 
-```{r, eval=TRUE}
+```{r, eval=FALSE}
 PlotWordCloud(dtm2_ugm)
 
 ```
 
 #### Naive model
-```{r, cache=FALSE}
+```{r, eval=FALSE}
 ## The predicted rating is simply the average of the ratings in the training data
 naive.pred <- mean(bus$stars)
 ## Mean square errors (MSE) of the naive model
@@ -146,16 +150,21 @@ naive.mse <- mean((naive.pred - bus$stars)^2)
 ```
 
 #### Lasso regression using Unigrams
-```{r, cache=FALSE}
+```{r, cache=TRUE, eval=FALSE}
 data_ugm <- GetModelingData(dtm2_ugm)
 result_ugm <- LassoRegression(data_ugm)
 
 ```
 
+#### Lasso regression using Bigrams
+```{r, cache=TRUE, eval=FALSE}
+data_Bgm <- GetModelingData(dtm2_Bgm)
+result_Bgm <- LassoRegression(data_Bgm)
+```
 
 
 ### Results
-```{r}
+```{r, eval=FALSE}
 result_ugm$mse
 result_ugm$coef[result_ugm$coef>0]
 length(result_ugm$coef[result_ugm$coef>0])
