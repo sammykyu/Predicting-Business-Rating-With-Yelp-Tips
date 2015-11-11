@@ -5,11 +5,11 @@ date: "November 2, 2015"
 output: html_document
 ---
 
-### Introduction
+### I Introduction
 
 The tips on the Yelp web site is the insider information provided by the Yelp's users or reviewers. The text of the tips contain the sentiments of the users of how they would recomend for the other users when they use the service or buy a product from a particular business. They can positive or negative and should be consistent with review posted by the same user. In this study, I will try to predict a business overall rating based on only the text of tips to see how the tips can affect the rating or image of the business.
 
-### Methods and Data
+### II Methods and Data
 
 To create and train a prediction model for business ratings, I use two datasets, "yelp_academic_dataset_business.json" and "yelp_academic_dataset_tips.json" from [Yelp Dataset Challenge](http://www.yelp.com/dataset_challenge) (Rounds 5 and 6).
 
@@ -20,43 +20,46 @@ The algorithm I use to develop the prediction model is called the LASSO (Least A
 
 $rating = \beta_{0} + \beta_{1}T_{1} + \beta_{1}T_{2} + ... + \beta_{p}T_{p} + \varepsilon$  
 
-Where the $T_{p}$ is a popular word or term appears in the tips text, such as "great".  
+Where the $T_{p}$ is the popular word or term appears in the tips and $\varepsilon$ is a mean-zero random error term.  
 The goal of the LASSO is to find the coefficients those can minimize the quantity below:  
 
-$RSS + \lambda\sum_{j=1}^{p}{|}\beta_{j}{|}$  
+$\sum_{i=1}^{n}({rating}_{i} - \beta_{0} - \sum_{j=1}^{p}\beta_{j}{T}_{ij})^2 + \lambda\sum_{j=1}^{p}{|}\beta_{j}{|} = RSS + \lambda\sum_{j=1}^{p}{|}\beta_{j}{|}$  
 
-Where $RSS(Root Square Errors) = \sum_{i=1}^{n}({rating}_{i} - \beta_{0} - \sum_{j=1}^{p}\beta_{j}{T}_{ij})^2$    
+To get the most popular words from the tips as the features of the LASSO model, text mining technique is used. There are more than 80,000 words found in the text of the tips but many of them are not frequent used terms (high sparsity). So we filter out those terms with more than 99% sparsity and keep around 290 terms for the model development.
 
-
-
-```{r, echo=FALSE, eval=FALSE}
-memory.size(max=30000)
+The study first estimates the predicted rating and mean square errors (MSE) from a naive model for comparison. Then we train and validate a LASSO model using _unigrams_ (single word in each term) and _bigrams_ (two adjacient words in each term).
+    
+```{r, echo=TRUE, eval=TRUE}
+## load required libraries
+memory.limit(size=30000)
 library(jsonlite)
 library(NLP)
 library(tm)
 library(SnowballC)
 library(wordcloud)
 library(glmnet)
-
+library(ggplot2)
 ```
-
 #### Reading data
-```{r, cache=TRUE, eval=FALSE, echo=FALSE}
+```{r, cache=TRUE, eval=TRUE, echo=TRUE}
 bus <- stream_in(file("yelp_academic_dataset_business.json"))
 tips <- stream_in(file("yelp_academic_dataset_tip.json"))
 
 ```
 
-#### User defined functions
-```{r, eval=FALSE}
-
+```{r, eval=TRUE}
+## user defined functions
 PlotWordCloud <- function (docTermMatrix) {
   ## Find frequent terms
-  frequency <- colSums(docTermMatrix)
-  frequency <- sort(frequency, decreasing=TRUE)
+  freq <- colSums(docTermMatrix)
+  freq <- sort(freq, decreasing=TRUE)
   ## make word cloud
-  words <- names(frequency)
-  wordcloud(words, frequency, max.words=100)
+  word <- names(freq)
+  wordcloud(word, freq, max.words=100, colors=brewer.pal(6,"Dark2"))
+  
+  wf <- data.frame(word=word, freq=freq)
+  subset(wf, freq>10000) %>%
+    ggplot(aes(word, freq)) + geom_bar(stat="identity") + theme(axis.text.x=element_text(angle=45, hjust=1))
 }
 
 GetModelingData <- function (docTermMatrix) {
@@ -100,7 +103,7 @@ LassoRegression <- function (params) {
 ```
 
 #### Text mining on the tip texts
-```{r, cache=TRUE, eval=FALSE}
+```{r, cache=TRUE, eval=TRUE}
 
 ## set the tip texts as the source
 vsource <- VectorSource(tips$text)
@@ -122,56 +125,57 @@ dtm_ugm <- removeSparseTerms(dtm_ugm, 0.996)
 ## save the dtm as a regular matrix for later processing
 dtm2_ugm <- as.matrix(dtm_ugm)
 
-## bigrams data (we keep the stop words)
+## bigrams data (stop words are kept in the matrix)
 tiptexts_bgm <- tm_map(tiptexts, stemDocument)
-## create a document-term matrix from the tip texts
 dtm_bgm <- DocumentTermMatrix(tiptexts_bgm)
-## remove the terms with more than 99.8% sparcity from the dtm
 dtm_bgm <- removeSparseTerms(dtm_bgm, 0.998)
-## save the dtm as a regular matrix for later processing
 dtm2_bgm <- as.matrix(dtm_bgm)
 
 ```
 
 
 #### Most frequent used terms in tips 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 PlotWordCloud(dtm2_ugm)
+PlotWordCloud(dtm2_bgm)
 
 ```
 
 #### Naive model
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 ## The predicted rating is simply the average of the ratings in the training data
 naive.pred <- mean(bus$stars)
 ## Mean square errors (MSE) of the naive model
 naive.mse <- mean((naive.pred - bus$stars)^2)
-
 ```
+Business average overall rating: `naive.pred`  
 
-#### Lasso regression using Unigrams
-```{r, cache=TRUE, eval=FALSE}
+
+#### The LASSO
+```{r, cache=TRUE, eval=TRUE}
+## unigrams
 data_ugm <- GetModelingData(dtm2_ugm)
 result_ugm <- LassoRegression(data_ugm)
+## bigrams
+data_bgm <- GetModelingData(dtm2_bgm)
+result_bgm <- LassoRegression(data_bgm)
 
 ```
 
-#### Lasso regression using Bigrams
-```{r, cache=TRUE, eval=FALSE}
-data_Bgm <- GetModelingData(dtm2_Bgm)
-result_Bgm <- LassoRegression(data_Bgm)
-```
+### III Results  
+Here are the results from the three different models:  
+
+Model            | MSE             | Total No. of Features     | No. of Features with non-zero coefficient
+---------------- | --------------- | ------------------------- | -----------------------------------------
+Naive            | `naive.mse'     | N/A                       | N/A
+LASSO (unigrams) | `result_ugm$mse`| `length(result_ugm$coef)` | `length(result_ugm$coef[result_ugm$coef != 0])`
+LASSO (bigrams)  | `result_bgm$mse`| `length(result_bgm$coef)` | `length(result_bgm$coef[result_bgm$coef != 0])`
+
+Features in unigram model with non-zero coefficient:  
+result_ugm$coef[result_ugm$coef!=0]  
+Features in bigram model with non-zero coefficient:  
+result_ugm$coef[result_ugm$coef!=0]  
 
 
-### Results
-```{r, eval=FALSE}
-result_ugm$mse
-result_ugm$coef[result_ugm$coef>0]
-length(result_ugm$coef[result_ugm$coef>0])
-
-```
-
-
-
-### Discussion
+### IV Discussion
 

@@ -3,15 +3,15 @@ memory.size(40000)
 library(jsonlite)
 library(NLP)
 library(tm)
-library(dplyr)
+#library(dplyr)
 library(SnowballC)
 library(wordcloud)
-library(lattice)
-library(ggplot2)
-library(caret)
-library(pls)
-library(FactoMineR)
-library(stats)
+# library(lattice)
+# library(ggplot2)
+# library(caret)
+# library(pls)
+# library(FactoMineR)
+# library(stats)
 library(glmnet)
 
 bus <- stream_in(file("yelp_academic_dataset_business.json"))
@@ -36,6 +36,7 @@ dtm <- DocumentTermMatrix(corpus, control = list(tokenize = BigramTokenizer))
 
 ## make a document-term matrix
 # dtm <- DocumentTermMatrix(corpus)
+# dtmSparse <- removeSparseTerms(dtm, 0.996)
 dtmSparse <- removeSparseTerms(dtm, 0.998)
 dtm2 <- as.matrix(dtmSparse)
 
@@ -44,9 +45,7 @@ frequency <- colSums(dtm2)
 frequency <- sort(frequency, decreasing=TRUE)
 ## make word cloud
 words <- names(frequency)
-maxlen <- ifelse(length(words) > 50, 50, length(words))
-## show at most 100 most frequent used terms in a word cloud
-wordcloud(words[1:maxlen], frequency[1:maxlen])
+wordcloud(words, frequency, max.words=100, colors=brewer.pal(6,"Dark2"))
 
 dtm_tips <- cbind(business_id=tips$business_id, as.data.frame(dtm2))
 
@@ -73,8 +72,8 @@ test=(-train)
 y.test=y[test]
 
 ## Naive model
-naive.pred <- mean(bus$stars)
-mean((naive.pred -y.test)^2)
+(naive.pred <- mean(bus$stars))
+mean((naive.pred -bus$stars)^2)
 
 
 ## ridge regression
