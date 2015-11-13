@@ -1,5 +1,3 @@
-memory.size(40000)
-
 library(jsonlite)
 library(NLP)
 library(tm)
@@ -7,7 +5,7 @@ library(tm)
 library(SnowballC)
 library(wordcloud)
 # library(lattice)
-# library(ggplot2)
+library(ggplot2)
 # library(caret)
 # library(pls)
 # library(FactoMineR)
@@ -26,18 +24,18 @@ corpus <- tm_map(corpus, content_transformer(tolower))
 corpus <- tm_map(corpus, removeNumbers)
 corpus <- tm_map(corpus, removePunctuation)
 corpus <- tm_map(corpus, stripWhitespace)
-#corpus <- tm_map(corpus, removeWords, stopwords("english"))
+corpus <- tm_map(corpus, removeWords, stopwords("english"))
 corpus <- tm_map(corpus, stemDocument)
 
-BigramTokenizer <- function(x)
-    unlist(lapply(ngrams(words(x), 2), paste, collapse = " "), use.names = FALSE)
+dtm <- DocumentTermMatrix(corpus)
+dtmSparse <- removeSparseTerms(dtm, 0.996)
 
-dtm <- DocumentTermMatrix(corpus, control = list(tokenize = BigramTokenizer))
+# BigramTokenizer <- function(x)
+#     unlist(lapply(ngrams(words(x), 2), paste, collapse = " "), use.names = FALSE)
+# dtm <- DocumentTermMatrix(corpus, control = list(tokenize = BigramTokenizer))
+# dtmSparse <- removeSparseTerms(dtm, 0.998)
 
 ## make a document-term matrix
-# dtm <- DocumentTermMatrix(corpus)
-# dtmSparse <- removeSparseTerms(dtm, 0.996)
-dtmSparse <- removeSparseTerms(dtm, 0.998)
 dtm2 <- as.matrix(dtmSparse)
 
 ## Find frequent terms
@@ -46,6 +44,10 @@ frequency <- sort(frequency, decreasing=TRUE)
 ## make word cloud
 words <- names(frequency)
 wordcloud(words, frequency, max.words=100, colors=brewer.pal(6,"Dark2"))
+wf <- data.frame(word=words, freq=frequency)
+  ggplot(data = subset(wf, freq>10000), aes(word, freq)) + 
+  geom_bar(stat="identity") + 
+  theme(axis.text.x=element_text(angle=45, hjust=1))
 
 dtm_tips <- cbind(business_id=tips$business_id, as.data.frame(dtm2))
 
@@ -73,17 +75,18 @@ y.test=y[test]
 
 ## Naive model
 (naive.pred <- mean(bus$stars))
-mean((naive.pred -bus$stars)^2)
+(naive.mse <- mean((naive.pred -bus$stars)^2))
+sqrt(naive.mse)
 
 
 ## ridge regression
-RidgeRegression <- function (trainingParams) {
-  ridge.mod <- glmnet(trainingParams$x.train, trainingParams$y.train, alpha=0, lambda=trainingParams$lambdas, thresh=1e-12)
+RidgeRegression <- function (params) {
+  ridge.mod <- glmnet(params$x.train, params$y.train, alpha=0, lambda=params$lambdas, thresh=1e-12)
   set.seed(1)
-  cv.out <- cv.glmnet(trainingParams$x.train, trainingParams$y.train, alpha=0)
+  cv.out <- cv.glmnet(params$x.train, params$y.train, alpha=0)
   bestlamda <- cv.out$lambda.min
-  ridge.pred <- predict(ridge.mod, s=bestlamda, newx=trainingParams$x.test)
-  mse <- mean((ridge.pred - trainingParams$y.test)^2)
+  ridge.pred <- predict(ridge.mod, s=bestlamda, newx=params$x.test)
+  mse <- mean((ridge.pred - params$y.test)^2)
   
   return(list(mod=ridge.mod, bestlamda=bestlamda, mse=mse))
 }
@@ -110,8 +113,8 @@ out=glmnet (x,y,alpha=1, lambda=grid)
 lasso.coef2=predict (out ,type="coefficients",s= bestlam)
 lasso.coef=lasso.coef2[1:dim(lasso.coef2)[1],]
 lasso.coef
-lasso.coef[lasso.coef>0]
-length(lasso.coef[lasso.coef>0])
+lasso.coef[lasso.coef!=0]
+length(lasso.coef[lasso.coef!=0])
 
 ## pcr
 set.seed(2)
