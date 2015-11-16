@@ -136,7 +136,7 @@ data <- GetModelingData(dtm2)
 out_ugm <- LassoRegression(data)
 ## plot word cloud and bar chart for most frequent used terms
 wf_ugm <- PlotWordCloud(dtm2, 75)
-ggplot(data = subset(wf_ugm, freq>10000), aes(word, freq)) + geom_bar(stat="identity", colour="blue") + 
+ggplot(data = subset(wf_ugm, freq>10000), aes(word, freq)) + geom_bar(stat="identity", fill="blue") + 
   ggtitle("Word Frequencies") + theme(axis.text.x=element_text(angle=45, hjust=1))
 ## remove the big objects to save memory space
 rm(tiptexts_ugm, dtm, dtm2, data)
