@@ -1,49 +1,51 @@
 ---
-title: "Predicting Business Rating Based on Yelp Tips Using Lasso model"
-author: "Sammy Yu"
-date: "November 2, 2015"
-output: word_document
+title: "Predicting Rating Based on Yelp Tips Using LASSO"
+author: "Ka Pang (Sammy) Yu"
+date: "November 14, 2015"
+output:
+  word_document: default
+fontsize: 9pt
 ---
 
 ### I Introduction
-
-The tips on the Yelp web site is the insider information provided by the Yelp's users or reviewers. The text of the tips contain the sentiments of the users of how they would recomend for the other users when they use the service or buy a product from a particular business. They can positive or negative and should be consistent with review posted by the same user. In this study, I will try to predict a business overall rating based on only the text of tips to see how the tips can affect the rating or image of the business.
+The tips on the Yelp website is the insider information provided by the Yelp's users or reviewers. The tip text contain the sentiments of the users of how they would (or would not) recomend the other users the service or product they are going to buy from a particular business. The tips can be positive or negative and should be consistent with review, if any, posted by the same user. In this study, I am going to find the correlation between a business rating and its tips by developing a predictive model using the words (or terms) in the tips text as the independent variables (or features) and rating as the dependent variable.
 
 ### II Methods and Data
+To create and train a predictive model for business ratings, I use two datasets, namely "yelp_academic_dataset_business.json" and "yelp_academic_dataset_tips.json" from the [Yelp Dataset Challenge](http://www.yelp.com/dataset_challenge) (Rounds 5 and 6).
 
-To create and train a prediction model for business ratings, I use two datasets, "yelp_academic_dataset_business.json" and "yelp_academic_dataset_tips.json" from [Yelp Dataset Challenge](http://www.yelp.com/dataset_challenge) (Rounds 5 and 6).
+Both files are in JSON format. The files will be read, merged and cleaned up before they are used to develop the model.  
 
-Both files are in JSON format. The files will be read, merged and cleaned up before they are used for developing the prediction model.  
+#### Exploratory Analysis  
+Here is the summary of the tips dataset:  
 
+No. of Tips | Avg. Tip Length | No. of Bus. in Tips | No. of Users Provided Tips | Tips Covered Period
+----------- | --------------- | ------------------- | -------------------------- | ---------------------
+495,107     | 58.73 chars     | 42,111              | 80,836                     | 4/15/2009 - 1/22/2015
 
-The algorithm I use to develop the prediction model is called the LASSO (Least Absolute Shrinkage and Selection Operator) which was developed by Robert Tibshirani in 1996. The LASSO is derived from multiple linear regression and is similar to Ridge Regression which penalize the coefficients to minimize overfitting. The LASSO has an advantage over Ridge Regression though is that it not only shrinks the coefficients but also force some of the coefficients to be exactly zero when the tuning parameter $\lambda$ is selected large enough.  
+#### Machine Learning Algorithm  
+The algorithm used to develop the predictive model is called LASSO (Least Absolute Shrinkage and Selection Operator) which was developed by Dr. Robert Tibshirani in 1996. The LASSO is derived from the multiple linear regression and is similar to Ridge Regression which penalizes the coefficients in order to minimize the overfitting. The LASSO has an advantage over Ridge Regression though is that it not only shrinks the coefficients but also forces some of the coefficients to be exactly zero when the regularization parameter $\lambda$ is selected properly.  
 
-$rating = \beta_{0} + \beta_{1}T_{1} + \beta_{1}T_{2} + ... + \beta_{p}T_{p} + \varepsilon$  
+Here is the model: $rating = \beta_{0} + \beta_{1}T_{1} + \beta_{1}T_{2} + ... + \beta_{p}T_{p} + \varepsilon$  
 
 Where the $T_{p}$ is the popular word or term appears in the tips and $\varepsilon$ is a mean-zero random error term.  
-The goal of the LASSO is to find the coefficients those can minimize the quantity below:  
+The goal of the LASSO is to find a set of coefficients that can minimize the quantity below:  
 
 $\sum_{i=1}^{n}({rating}_{i} - \beta_{0} - \sum_{j=1}^{p}\beta_{j}{T}_{ij})^2 + \lambda\sum_{j=1}^{p}{|}\beta_{j}{|} = RSS + \lambda\sum_{j=1}^{p}{|}\beta_{j}{|}$  
 
-To get the most popular words from the tips as the features of the LASSO model, text mining technique is used. There are more than 80,000 words found in the text of the tips but many of them are not frequent used terms (high sparsity). So we filter out those terms with more than 99% sparsity and keep around 290 terms for the model development.
+To get the most popular words, $T_{p}s$ from the tips, text mining technique is used. There are more than 80,000 words found in the tips text but many of them are not frequently used in all the tips (high sparsity). So those terms will be filtered out when their sparsity are more than 99%. As a result, there are about 290 terms are left for the model development.
 
-The study first estimates the predicted rating and mean square errors (MSE) from a naive model for comparison. Then we train and validate a LASSO model using _unigrams_ (single word in each term) and _bigrams_ (two adjacient words in each term).
-    
-```{r Loading library, eval=TRUE, results='hide'}
-## load required libraries
-library(jsonlite)
-library(NLP)
-library(tm)
-library(SnowballC)
-library(wordcloud)
-library(glmnet)
-library(ggplot2)
+The study first estimates the predictive rating and mean square errors (MSE) from a naive model for comparison. Then we train and validate a LASSO model using _unigrams_ (single word in each term) and _bigrams_ (two adjacent words in each term) to see which one works better. The code is as follow:
+
+```{r Loading library, eval=TRUE, message=FALSE, warning=FALSE, results='hide'}
+## Loading libraries
+lapply(c("jsonlite","NLP","tm","SnowballC","wordcloud","glmnet","ggplot2"),
+       require, character.only = TRUE)
 ```
-#### Reading data
-```{r,  eval=TRUE, results='hide'}
+
+```{r Reading data,  eval=TRUE, message=FALSE, warning=FALSE, results='hide'}
+## Read data from the files assuming they reside in the working directory  
 bus <- stream_in(file("yelp_academic_dataset_business.json"))
 tips <- stream_in(file("yelp_academic_dataset_tip.json"))
-
 ```
 
 ```{r, eval=TRUE}
@@ -54,8 +56,7 @@ PlotWordCloud <- function (docTermMatrix, maxwords) {
   freq <- sort(freq, decreasing=TRUE)
   ## make word cloud
   word <- names(freq)
-  wordcloud(word, freq, max.words=maxwords, colors=brewer.pal(6,"Dark2"))
-  
+  wordcloud(word, freq, max.words=maxwords, colors=brewer.pal(6,"Dark2"), rot.per=.15)
   wf <- data.frame(word=word, freq=freq)
   return(wf)
 }
@@ -63,12 +64,10 @@ PlotWordCloud <- function (docTermMatrix, maxwords) {
 GetModelingData <- function (docTermMatrix) {
   ## add the business ID column to the term matrix
   dtm_tips <- cbind(business_id=tips$business_id, as.data.frame(docTermMatrix))
-  
   ## merge the business ratings with tip terms dataframe
   bustips <- merge(bus[,c("business_id","stars")], dtm_tips, by="business_id")
   ## business ID column is no longer needed
   bustips$business_id <- NULL
-
   ## prepare the training and test data
   x <- model.matrix(stars~., bustips)[,-1]
   y <- bustips$stars
@@ -77,57 +76,53 @@ GetModelingData <- function (docTermMatrix) {
   set.seed(1)
   ## randomly get 70% of the data for training, 30% for validation
   train<-sample (1: nrow(x), nrow(x) * 0.7)
-
   return(list(x=x, y=y, train=train, lambdas=lambdas))
 }
 
 LassoRegression <- function (params) {
   train <- params$train
   test <- (-train)
+  ## for Lasso, parameter alpha needs to be 1
   lasso.mod <- glmnet(params$x[train,], params$y[train], alpha=1, lambda=params$lambdas)
   set.seed(2)
+  ## perform cross validation
   cv.out <- cv.glmnet(params$x[train,], params$y[train], alpha=1)
+  ## get the best lamdba from the validation result
   bestlamda <- cv.out$lambda.min
+  ## predict the ratings using the test data
   lasso.pred  <- predict(lasso.mod, s=bestlamda, newx=params$x[test,])
+  ## calcuate the mean squre errors on the test predictions
   mse <- mean((lasso.pred - params$y[test])^2)
+  ## use the full dataset to re-train the model and get the coeffients from it
   out <- glmnet (params$x, params$y, alpha=1, lambda=params$lambdas)
   lasso.pred.coef <- predict(out, type="coefficients", s=bestlamda)
-  ## get the coefficients vector
+  ## get the vector of coefficients
   lasso.coef <- lasso.pred.coef[1:dim(lasso.pred.coef)[1],]
-  
   return(list(mod=lasso.mod, bestlamda=bestlamda, mse=mse, coef=lasso.coef))
 }
-
 ```
 
-#### Text mining on the tip texts
 ```{r, eval=TRUE}
-
-## set the tip texts as the source
+## text mining on the tip texts. Set the tip texts as the source
 vsource <- VectorSource(tips$text)
 tiptexts <- Corpus(vsource)
-
-## cleaning
+## data cleaning
 tiptexts <- tm_map(tiptexts, content_transformer(tolower))
 tiptexts <- tm_map(tiptexts, removeNumbers)
 tiptexts <- tm_map(tiptexts, removePunctuation)
 tiptexts <- tm_map(tiptexts, stripWhitespace)
-
 ```
 
-#### Naive model
 ```{r, eval=TRUE}
-## The predicted rating is simply the average of the ratings in the training data
+## Naive model. The predicted rating is simply the average of the ratings in the training data
 naive.pred <- mean(bus$stars)
 ## Mean square errors (MSE) of the naive model
 naive.mse <- mean((naive.pred - bus$stars)^2)
 ```
-Business average overall rating: __`r naive.pred`__  
+Predictive rating from naive model: __`r naive.pred`__  
 
-
-#### The Lasso Regression using Unigrams
-```{r,  eval=TRUE}
-## prepare data
+```{r,  eval=TRUE, message=FALSE, warning=FALSE}
+## Lasso Regression using Unigrams 
 tiptexts_ugm <- tm_map(tiptexts, removeWords, stopwords("english"))
 tiptexts_ugm <- tm_map(tiptexts_ugm, stemDocument)
 ## create a document-term matrix from the tip texts
@@ -136,21 +131,19 @@ dtm <- DocumentTermMatrix(tiptexts_ugm)
 dtm <- removeSparseTerms(dtm, 0.996)
 ## save the dtm as a regular matrix for later processing
 dtm2 <- as.matrix(dtm)
-## train model
+## train the model
 data <- GetModelingData(dtm2)
 out_ugm <- LassoRegression(data)
-
 ## plot word cloud and bar chart for most frequent used terms
-wf_ugm <- PlotWordCloud(dtm2, 100)
-ggplot(data = subset(wf_ugm, freq>10000), aes(word, freq)) + 
-  geom_bar(stat="identity") + theme(axis.text.x=element_text(angle=45, hjust=1))
-
+wf_ugm <- PlotWordCloud(dtm2, 75)
+ggplot(data = subset(wf_ugm, freq>10000), aes(word, freq)) + geom_bar(stat="identity", colour="blue") + 
+  ggtitle("Word Frequencies") + theme(axis.text.x=element_text(angle=45, hjust=1))
+## remove the big objects to save memory space
 rm(tiptexts_ugm, dtm, dtm2, data)
 ```
 
-#### The Lasso Regression using Bigrams
-```{r,  eval=TRUE}
-## bigrams data (stop words are kept in the matrix)
+```{r,  eval=TRUE, message=FALSE, warning=FALSE}
+## bigrams data (stop words are not removed)
 tiptexts_bgm <- tm_map(tiptexts, stemDocument)
 BigramTokenizer <- function(x) {unlist(lapply(ngrams(words(x), 2), paste, collapse = " "), use.names = FALSE)}
 dtm <- DocumentTermMatrix(tiptexts_bgm, control = list(tokenize = BigramTokenizer))
@@ -158,47 +151,41 @@ dtm <- removeSparseTerms(dtm, 0.998)
 dtm2 <- as.matrix(dtm)
 data <- GetModelingData(dtm2)
 out_bgm <- LassoRegression(data)
-wf_bgm <- PlotWordCloud(dtm2, 50)
-ggplot(data = subset(wf_bgm, freq>5000), aes(word, freq)) + 
-  geom_bar(stat="identity") + theme(axis.text.x=element_text(angle=45, hjust=1))
 rm(tiptexts_bgm, dtm, dtm2, data)
-
 ```
-
 ### III Results  
 Here are the results from the three different models:  
 
-Model            | MSE             | RMSE                 | Total No. of Features     | No. of Features with non-zero coefficient
----------------- | --------------- | -------------------- | ------------------------- | -----------------------------------------
+Model            | MSE             | RMSE                 | Total No. of Features     | No. of Features with non-zero coef.
+---------------- | --------------- | -------------------- | ------------------------- | -----------------------------------
 Naive            | `r naive.mse`   | `r sqrt(naive.mse)`  | N/A                       | N/A
 Lasso (unigrams) | `r out_ugm$mse` | `r sqrt(out_ugm$mse)`| `r length(out_ugm$coef)-1`| `r length(out_ugm$coef[out_ugm$coef != 0])`
-Lasso (bigrams)  | `r out_bgm$mse` | `r sqrt(out_bgm$mse)`| `r length(out_bgm$coef)-1`| `r length(out_bgm$coef[out_bgm$coef != 0])`
+Lasso (bigrams)  | `r out_bgm$mse` | `r sqrt(out_bgm$mse)`| `r length(out_bgm$coef)-1`| `r length(out_bgm$coef[out_bgm$coef != 0])`  
 
-Features in unigram model with non-zero coefficient:  
-(_`r names(out_ugm$coef[out_ugm$coef!=0])[-1]`_)  
-Features in bigram model with non-zero coefficient:  
-(_`r names(out_bgm$coef[out_bgm$coef!=0])[-1]`_)  
-
+Features in unigram model with non-zero coefficients:  
+(___`r names(out_ugm$coef[out_ugm$coef!=0])[-1]`___) 
 
 ### IV Discussion  
-As you can see from the results, the LASSO regression model (unigrams or bigrams) has a lower mean square error (MSE) rate. So the LASSO model is a better model than the baseline naive model. Also, for the Lasso unigrams model, the original number of features used for the model training is `r length(out_ugm$coef[out_ugm$coef != 0])`. Now the actual number of features is `r length(out_ugm$coef)-1`. So the Lasso algorithm not only minimize the overfitting but also reduce the dimensions of the final model.   
+As you can see from the results, the LASSO regression model (unigrams or bigrams) has a much lower mean square error rate (MSE) than the naive model. So the LASSO model is really a better model. Also, for the Lasso unigrams model, the original number of features used for the model training is `r length(out_ugm$coef)-1`. Now the actual number of features is `r length(out_ugm$coef[out_ugm$coef != 0])`. So the Lasso algorithm not only minimizes the overfitting but also reduces the dimensions of the final model.   
   
-Ridge regression can produce a better error rate which is about 0.3481998 in MSE, but it doesn't force some coefficients to be exactly zero. Principal Component Analysis (PCA) can reduce the dimensions but it is harder to interpret because the new features (principal components) are no longer the original features.
+Ridge regression (code is not shown here) produces a better error rate which is about 0.3481998 of MSE, but it doesn't force some coefficients to be exactly zero. Principal Component Analysis (PCA) can reduce the dimensions but it is hard to interpret the model because the new features (principal components) are some kinds of transformation from the original features.
 
-I train the model using bigrams because I think using two adjacent words in a term should have a better sentiment, but it doesn't seem to have a better prediction rate than using the unigrams.
+The Lasso model using bigrams is also trained here because I think using two adjacent words in a term may have a better sentiment and predicting accuracy, but it doesn't seem to have a much better prediction rate than using the unigrams by looking at the results above. However, it does have a shorter dimensions than the unigrams model.  
 
-One interesting finding from the model is that the top 42 most frequent terms in the tips are not necessarily the features in the Lasso final model:  
+One interesting finding from the unigrams model is that the top 42 most frequent terms in the tips are not necessarily the features in the Lasso final model:  
 
 42 most frequent terms:  
-(_`r sort(wf_ugm$word[1:42])`_)  
+(___`r sort(wf_ugm$word[1:42])`___)  
 
-There are only 13 out of 42 most frequent terms are in the features of the final Lasso model. So in other words, most frequent terms do not necessary contribute to the rating prediction.
+There are only 13 out of them are in the features of the final model. So in other words, most frequent terms do not necessary contribute to the rating prediction.
 
-In the Yelp dataset, the Reviews contain similar sentiment data to the Tips, and each reviews associates with a direct votes for the business rating. So it may be a better tool to develop a predicting model; and actually there are some people have done some work in this direction. The following word cloud show the top 50 most frequent terms in the review text.  
+In the Yelp dataset, the reviews contain similar sentiment data to the tips, and each review is also associated with the direct votes for a business rating. So the reviews can also be used to develop a predictive model. And actually there are some people have done the work in this direction. 
 
-![Reviews Word Cloud](ReviewsWordcloud.png)
+This study does not try to compare the predictive models using the reviews and the tips, but try to understand if there is a correlation between the ratings and tips; and the results confirm that.  
 
+In conclusion, the predicting model based on the Yelp tips using the Lasso regression works pretty well, the error rate `r out_ugm$mse` is comparable to the ones of the models based on reviews from other studies.  
 
-This study does not try to override the work done by other people using the Reviews data, but just try to understand the correlation between the ratings and tips.  
-
-In conclusion, the predicting model based on the Tips using the Lasso regression works pretty well, the error rate `r out_ugm$mse` is comparable to the ones of the models based on Reviews.
+###References  
+1. A. De Catro, A. Du and A. Manicka, "Predicting Ratings Based on Yelp Tips".  
+2. Yifei Feng and Zhengli Sun, "Yelp User Rating Prediction".  
+3. Mingming Fan and Maryam Khademi, "Predicting a Business’ Star in Yelp from Its Reviews’ Text Alone"
