@@ -1,14 +1,14 @@
 ---
 title: "Predicting Rating Based on Yelp Tips Using LASSO"
-author: "Ka Pang (Sammy) Yu"
-date: "November 14, 2015"
+author: "Sammy Yu"
+date: "November 16, 2015"
 output:
   word_document: default
 fontsize: 9pt
 ---
 
 ### I Introduction
-The tips on the Yelp website is the insider information provided by the Yelp's users or reviewers. The tip text contain the sentiments of the users of how they would (or would not) recomend the other users the service or product they are going to buy from a particular business. The tips can be positive or negative and should be consistent with review, if any, posted by the same user. In this study, I am going to find the correlation between a business rating and its tips by developing a predictive model using the words (or terms) in the tips text as the independent variables (or features) and rating as the dependent variable.
+The tips on the Yelp website is the insider information provided by the Yelp's users or reviewers. The tip text contains the sentiments of the users of how they would (or would not) recommend the other users the service or product they are going to buy from a particular business. The tips can be positive or negative and should be consistent with review, if any, posted by the same user. In this study, I am going to find the correlation between a business rating and its tips by developing a predictive model using the words (or terms) in the tips text as the independent variables (or features) and rating as the dependent variable.
 
 ### II Methods and Data
 To create and train a predictive model for business ratings, I use two datasets, namely "yelp_academic_dataset_business.json" and "yelp_academic_dataset_tips.json" from the [Yelp Dataset Challenge](http://www.yelp.com/dataset_challenge) (Rounds 5 and 6).
@@ -177,7 +177,7 @@ One interesting finding from the unigrams model is that the top 42 most frequent
 42 most frequent terms:  
 (___`r sort(wf_ugm$word[1:42])`___)  
 
-There are only 13 out of them are in the features of the final model. So in other words, most frequent terms do not necessary contribute to the rating prediction.
+There are only 13 out of them are in the features of the final model. So in other words, most frequent terms do not necessarily contribute to the rating prediction.
 
 In the Yelp dataset, the reviews contain similar sentiment data to the tips, and each review is also associated with the direct votes for a business rating. So the reviews can also be used to develop a predictive model. And actually there are some people have done the work in this direction. 
 
