@@ -1,0 +1,22 @@
+Predicting Rating Based on Yelp Tips Using LASSO
+========================================================
+author: Sammy Yu  
+date: November 16, 2015  
+
+Introduction
+========================================================
+The tips on the Yelp website is the insider information provided by the Yelp's users or reviewers. The tip text contains the sentiments of the users of how they would (or would not) recommend the other users the service or product they are going to buy from a particular business. The tips can be positive or negative and should be consistent with review, if any, posted by the same user. In this study, I am going to find the correlation between a business rating and its tips by developing a predictive model using the words (or terms) in the tips text as the independent variables (or features) and rating as the dependent variable.
+
+Methodology
+========================================================
+The algorithm used to develop the predictive model is called LASSO (Least Absolute Shrinkage and Selection Operator) which is derived from the multiple linear regression. The LASSO can not only minimize the overfitting but also reduce the dimensions of the model.
+
+$rating = \beta_{0} + \beta_{1}T_{1} + \beta_{1}T_{2} + ... + \beta_{p}T_{p} + \varepsilon$  
+
+Where the $T_{p}$ is the popular word or term appears in the tips and $\varepsilon$ is a mean-zero random error term.  
+The goal of the LASSO is to find a set of coefficients that can minimize the quantity below:  
+
+$\sum_{i=1}^{n}({rating}_{i} - \beta_{0} - \sum_{j=1}^{p}\beta_{j}{T}_{ij})^2 + \lambda\sum_{j=1}^{p}{|}\beta_{j}{|} = RSS + \lambda\sum_{j=1}^{p}{|}\beta_{j}{|}$
+
+Text Mining
+========================================================
