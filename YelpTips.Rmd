@@ -8,7 +8,7 @@ fontsize: 9pt
 ---
 
 ### I Introduction
-The tips on the Yelp website is the insider information provided by the Yelp's users or reviewers. The tip text contains the sentiments of the users of how they would (or would not) recommend the other users the service or product they are going to buy from a particular business. The tips can be positive or negative and should be consistent with review, if any, posted by the same user. In this study, I am going to find the correlation between a business rating and its tips by developing a predictive model using the words (or terms) in the tips text as the independent variables (or features) and rating as the dependent variable.
+The tips on the Yelp website is the insider information provided by the Yelp's users or reviewers. The tip text contains the sentiments of the users of how they would (or would not) recommend the other users the service or product they are going to buy from a particular business. The tips can be positive or negative and should be consistent with a review, if any, posted by the same user. In this study, I am going to find the correlation between a business rating and its tips by developing a predictive model using the words (or terms) in the tips text as the independent variables (or features) and rating as the dependent variable.
 
 ### II Methods and Data
 To create and train a predictive model for business ratings, I use two datasets, namely "yelp_academic_dataset_business.json" and "yelp_academic_dataset_tips.json" from the [Yelp Dataset Challenge](http://www.yelp.com/dataset_challenge) (Rounds 5 and 6).
@@ -27,12 +27,12 @@ The algorithm used to develop the predictive model is called LASSO (Least Absolu
 
 Here is the model: $rating = \beta_{0} + \beta_{1}T_{1} + \beta_{1}T_{2} + ... + \beta_{p}T_{p} + \varepsilon$  
 
-Where the $T_{p}$ is the popular word or term appears in the tips and $\varepsilon$ is a mean-zero random error term.  
+Where the $T_{p}$ is the frequency of a word or term appears in a tip and $\varepsilon$ is a mean-zero random error term.  
 The goal of the LASSO is to find a set of coefficients that can minimize the quantity below:  
 
 $\sum_{i=1}^{n}({rating}_{i} - \beta_{0} - \sum_{j=1}^{p}\beta_{j}{T}_{ij})^2 + \lambda\sum_{j=1}^{p}{|}\beta_{j}{|} = RSS + \lambda\sum_{j=1}^{p}{|}\beta_{j}{|}$  
 
-To get the most popular words, $T_{p}s$ from the tips, text mining technique is used. There are more than 80,000 words found in the tips text but many of them are not frequently used in all the tips (high sparsity). So those terms will be filtered out when their sparsity are more than 99%. As a result, there are about 290 terms are left for the model development.
+To get the frequency of the most popular words, $T_{p}s$ from the tips, text mining technique is used. There are more than 80,000 words found in the tips text but many of them are not frequently used in all the tips (high sparsity). So those terms will be filtered out when their sparsity are more than 99%. As a result, there are about 290 terms are left for the model development.
 
 The study first estimates the predictive rating and mean square errors (MSE) from a naive model for comparison. Then we train and validate a LASSO model using _unigrams_ (single word in each term) and _bigrams_ (two adjacent words in each term) to see which one works better. The code is as follow:
 
@@ -156,11 +156,11 @@ rm(tiptexts_bgm, dtm, dtm2, data)
 ### III Results  
 Here are the results from the three different models:  
 
-Model            | MSE             | RMSE                 | Total No. of Features     | No. of Features with non-zero coef.
----------------- | --------------- | -------------------- | ------------------------- | -----------------------------------
-Naive            | `r naive.mse`   | `r sqrt(naive.mse)`  | N/A                       | N/A
-Lasso (unigrams) | `r out_ugm$mse` | `r sqrt(out_ugm$mse)`| `r length(out_ugm$coef)-1`| `r length(out_ugm$coef[out_ugm$coef != 0])`
-Lasso (bigrams)  | `r out_bgm$mse` | `r sqrt(out_bgm$mse)`| `r length(out_bgm$coef)-1`| `r length(out_bgm$coef[out_bgm$coef != 0])`  
+Model        | MSE             | RMSE                 | Total No. of Features     | No. of Features with non-zero coef.
+------------ | --------------- | -------------------- | ------------------------- | -----------------------------------
+Naive        | `r naive.mse`   | `r sqrt(naive.mse)`  | N/A                       | N/A
+Lasso (uni.) | `r out_ugm$mse` | `r sqrt(out_ugm$mse)`| `r length(out_ugm$coef)-1`| `r length(out_ugm$coef[out_ugm$coef != 0])`
+Lasso (bi.)  | `r out_bgm$mse` | `r sqrt(out_bgm$mse)`| `r length(out_bgm$coef)-1`| `r length(out_bgm$coef[out_bgm$coef != 0])`  
 
 Features in unigram model with non-zero coefficients:  
 (___`r names(out_ugm$coef[out_ugm$coef!=0])[-1]`___) 

@@ -43,11 +43,11 @@ frequency <- colSums(dtm2)
 frequency <- sort(frequency, decreasing=TRUE)
 ## make word cloud
 words <- names(frequency)
-wordcloud(words, frequency, max.words=100, colors=brewer.pal(6,"Dark2"))
+wordcloud(words, frequency, max.words=75, colors=brewer.pal(6,"Dark2"))
 wf <- data.frame(word=words, freq=frequency)
   ggplot(data = subset(wf, freq>10000), aes(word, freq)) + 
-  geom_bar(stat="identity") + 
-  theme(axis.text.x=element_text(angle=45, hjust=1))
+  geom_bar(stat="identity", fill="blue") + 
+  theme(axis.text.x=element_text(angle=45, hjust=1)) + ggtitle("Word Frequencies")
 
 dtm_tips <- cbind(business_id=tips$business_id, as.data.frame(dtm2))
 

@@ -1,22 +1,46 @@
 Predicting Rating Based on Yelp Tips Using LASSO
 ========================================================
 author: Sammy Yu  
-date: November 16, 2015  
+date: November 17, 2015  
+transition: rotate
 
 Introduction
 ========================================================
-The tips on the Yelp website is the insider information provided by the Yelp's users or reviewers. The tip text contains the sentiments of the users of how they would (or would not) recommend the other users the service or product they are going to buy from a particular business. The tips can be positive or negative and should be consistent with review, if any, posted by the same user. In this study, I am going to find the correlation between a business rating and its tips by developing a predictive model using the words (or terms) in the tips text as the independent variables (or features) and rating as the dependent variable.
+The tips on the Yelp website is the insider information provided by the Yelp's users or reviewers. The tip text contains the sentiments of the users of how they would (or would not) recommend the other users the service or product they are going to buy from a particular business. The tips can be positive or negative and should be consistent with a review, if any, posted by the same user. In this study, I am going to find the correlation between a business rating and its tips by developing a predictive model using the words (or terms) in the tips text as the independent variables (or features) and rating as the dependent variable.
 
 Methodology
 ========================================================
-The algorithm used to develop the predictive model is called LASSO (Least Absolute Shrinkage and Selection Operator) which is derived from the multiple linear regression. The LASSO can not only minimize the overfitting but also reduce the dimensions of the model.
+<small>The algorithm used to develop the predictive model is called LASSO (Least Absolute Shrinkage and Selection Operator) which is derived from the multiple linear regression. The LASSO can not only minimize the overfitting but also reduce the dimensions of the model.
 
 $rating = \beta_{0} + \beta_{1}T_{1} + \beta_{1}T_{2} + ... + \beta_{p}T_{p} + \varepsilon$  
 
-Where the $T_{p}$ is the popular word or term appears in the tips and $\varepsilon$ is a mean-zero random error term.  
+Where the $T_{p}$ is the frequency of a word or term appears in a tip and $\varepsilon$ is a mean-zero random error term.  
 The goal of the LASSO is to find a set of coefficients that can minimize the quantity below:  
 
 $\sum_{i=1}^{n}({rating}_{i} - \beta_{0} - \sum_{j=1}^{p}\beta_{j}{T}_{ij})^2 + \lambda\sum_{j=1}^{p}{|}\beta_{j}{|} = RSS + \lambda\sum_{j=1}^{p}{|}\beta_{j}{|}$
 
-Text Mining
+The study first estimates the predictive rating and mean square errors (MSE) from a naive model (simple average) for comparison. Then we train and validate a LASSO model using _unigrams_ (single word in each term) and _bigrams_ (two adjacent words in each term) to see which one works better.</small>
+
+Frequently Used Words in the Yelp Tips
 ========================================================
+left: 40%
+![](wordcloud_unigrams.png)
+***
+<img src="WordFrequency_unigrams.png" width=600 height=400>
+
+Results and Conclusion
+========================================================
+Models
+* <small>Naive:       rating = 3.6733051</small>  
+* <small>Lasso(uni.): rating = 3.6960991761 + 0.1437396411 * amaz + ... + 0.0101246806 * yelp</small>
+
+Model         | MSE      | RMSE     | Total # of Features | # of Non-zero Coef. Feat.
+------------- | -------- | -------- | ------------------- | -------------------------
+Naive         | 0.794237 | 0.891200 | N/A                 | N/A
+Lasso (uni.)  | 0.352615 | 0.593814 | 294                 | 43
+Lasso (bi.)   | 0.359434 | 0.599528 | 291                 | 19  
+
+* <small>Lasso model has a much lower MSE rate than the naive model's.</small>
+* <small>The # of features in the lasso models has reduced significantly.</small>
+
+<small>In conclusion, the predicting model based on the Yelp tips using the Lasso regression works pretty well, the error rate 0.3526149 is comparable to the ones of the models based on reviews from other studies.</small>
